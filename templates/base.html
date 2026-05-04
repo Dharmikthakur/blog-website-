@@ -35,17 +35,29 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('home') }}">Home</a>
                     </li>
-                    <li class="nav-item ms-lg-3">
-                        <a class="btn btn-primary btn-new-post" href="{{ url_for('new_post') }}">
-                            <i class="fas fa-plus me-2"></i>New Post
-                        </a>
-                    </li>
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item ms-lg-3">
+                            <a class="btn btn-primary btn-new-post" href="{{ url_for('new_post') }}">
+                                <i class="fas fa-plus me-2"></i>New Post
+                            </a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                        </li>
+                        <li class="nav-item ms-lg-3">
+                            <a class="btn btn-outline-primary rounded-pill px-4" href="{{ url_for('register') }}">Register</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
 
     </nav>
-    // changed the name of the site and  knowing more 
+    
 
 
 

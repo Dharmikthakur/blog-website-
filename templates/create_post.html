@@ -5,11 +5,6 @@
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4 display-6 fw-bold text-center">{{ legend }}</legend>
                 
-                <div class="mb-4">
-                    <label for="author" class="form-label fw-600">Author Name</label>
-                    <input type="text" name="author" id="author" class="form-control form-control-lg bg-light border-0 shadow-none" 
-                           placeholder="Your name (optional)" value="{{ post.author if post else '' }}">
-                </div>
 
                 <div class="mb-4">
                     <label for="title" class="form-label fw-600">Title <span class="text-danger">*</span></label>
