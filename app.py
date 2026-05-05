@@ -1,5 +1,6 @@
 from flask import Flask, render_template, url_for, flash, redirect, request, abort
 from models import db, Post, User
+from sqlalchemy import text
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 import os
@@ -47,6 +48,15 @@ def save_picture(form_picture):
     i.save(picture_path)
 
     return picture_fn
+
+@app.route("/migrate")
+def migrate():
+    try:
+        db.session.execute(text("ALTER TABLE post ADD COLUMN image_file VARCHAR(20) DEFAULT 'default.jpg' NOT NULL"))
+        db.session.commit()
+        return "Migration successful: image_file column added!"
+    except Exception as e:
+        return f"Migration failed or already applied: {e}"
 
 @app.route("/")
 @app.route("/home")
