@@ -1,0 +1,7 @@
+instance/
+__pycache__/
+*.pyc
+.env
+.vscode/
+static/post_pics/* 
+!static/post_pics/default.jpg
