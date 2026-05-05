@@ -3,6 +3,8 @@ from models import db, Post, User
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 import os
+import secrets
+from PIL import Image
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -32,6 +34,19 @@ def load_user(user_id):
 # Create the database within the application context
 with app.app_context():
     db.create_all()
+
+def save_picture(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    picture_path = os.path.join(app.root_path, 'static/post_pics', picture_fn)
+
+    output_size = (1200, 800)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
+
+    return picture_fn
 
 @app.route("/")
 @app.route("/home")
@@ -92,6 +107,9 @@ def new_post():
             flash('Title and Content are required!', 'danger')
         else:
             post = Post(title=title, content=content, author=current_user)
+            if request.files.get('image'):
+                picture_file = save_picture(request.files.get('image'))
+                post.image_file = picture_file
             db.session.add(post)
             db.session.commit()
             flash('Your post has been created!', 'success')
@@ -114,6 +132,10 @@ def update_post(post_id):
         post.title = request.form.get('title')
         post.content = request.form.get('content')
         
+        if request.files.get('image'):
+            picture_file = save_picture(request.files.get('image'))
+            post.image_file = picture_file
+            
         if not post.title or not post.content:
             flash('Title and Content are required!', 'danger')
         else:
