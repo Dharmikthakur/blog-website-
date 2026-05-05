@@ -35,6 +35,13 @@ def load_user(user_id):
 # Create the database within the application context
 with app.app_context():
     db.create_all()
+    try:
+        # Check if column exists, if not add it
+        db.session.execute(text("ALTER TABLE post ADD COLUMN IF NOT EXISTS image_file VARCHAR(20) DEFAULT 'default.jpg' NOT NULL"))
+        db.session.commit()
+        app.logger.info("Database migration check completed.")
+    except Exception as e:
+        app.logger.error(f"Migration error: {e}")
 
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
@@ -48,15 +55,6 @@ def save_picture(form_picture):
     i.save(picture_path)
 
     return picture_fn
-
-@app.route("/migrate")
-def migrate():
-    try:
-        db.session.execute(text("ALTER TABLE post ADD COLUMN image_file VARCHAR(20) DEFAULT 'default.jpg' NOT NULL"))
-        db.session.commit()
-        return "Migration successful: image_file column added!"
-    except Exception as e:
-        return f"Migration failed or already applied: {e}"
 
 @app.route("/")
 @app.route("/home")
