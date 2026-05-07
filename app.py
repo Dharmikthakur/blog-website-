@@ -32,9 +32,25 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Create the database within the application context
-with app.app_context():
-    db.create_all()
+# Database initialization logic
+def init_db():
+    with app.app_context():
+        try:
+            db.create_all()
+            # Migration check: handle both SQLite and PostgreSQL
+            inspector = db.inspect(db.engine)
+            columns = [c['name'] for c in inspector.get_columns('post')]
+            if 'image_file' not in columns:
+                app.logger.info("Adding image_file column to post table...")
+                db.session.execute(text("ALTER TABLE post ADD COLUMN image_file VARCHAR(20) DEFAULT 'default.jpg' NOT NULL"))
+                db.session.commit()
+                app.logger.info("Migration successful.")
+        except Exception as e:
+            app.logger.error(f"Database initialization/migration error: {e}")
+            db.session.rollback()
+
+# Run initialization
+init_db()
 
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
@@ -42,21 +58,30 @@ def save_picture(form_picture):
     picture_fn = random_hex + f_ext
     picture_path = os.path.join(app.root_path, 'static/post_pics', picture_fn)
 
-    output_size = (1200, 800)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
+    # Ensure directory exists (might fail on Vercel)
+    try:
+        if not os.path.exists(os.path.dirname(picture_path)):
+            os.makedirs(os.path.dirname(picture_path), exist_ok=True)
+        
+        output_size = (1200, 800)
+        i = Image.open(form_picture)
+        i.thumbnail(output_size)
+        i.save(picture_path)
+    except Exception as e:
+        app.logger.error(f"Failed to save image: {e}")
+        # On Vercel, this is expected if using local storage. 
+        # In a real app, you'd use Cloudinary/S3.
+        return 'default.jpg'
 
     return picture_fn
 
-@app.route("/migrate")
-def migrate():
+@app.route("/debug-db")
+def debug_db():
     try:
-        db.session.execute(text("ALTER TABLE post ADD COLUMN image_file VARCHAR(20) DEFAULT 'default.jpg' NOT NULL"))
-        db.session.commit()
-        return "Migration successful: image_file column added!"
+        db.session.execute(text("SELECT 1"))
+        return "Database connection successful!"
     except Exception as e:
-        return f"Migration failed or already applied: {e}"
+        return f"Database connection failed: {e}"
 
 @app.route("/")
 @app.route("/home")
